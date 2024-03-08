@@ -1,6 +1,6 @@
 package types
 
-type Type int64
+type Type uint64
 
 const (
 	TYPE_INVALID Type = iota

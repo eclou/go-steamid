@@ -8,7 +8,6 @@ import (
 
 func Test_SteamId(t *testing.T) {
 	steamId, err := steamid.NewSteamId("76561198435082001")
-
 	if err != nil {
 		t.Fatalf("parse steam id failed: %v", err)
 	}

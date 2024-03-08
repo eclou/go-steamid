@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	UNIVERSE_INVALID int64 = iota
+	UNIVERSE_INVALID uint64 = iota
 	UNIVERSE_PUBLIC
 	UNIVERSE_BETA
 	UNIVERSE_INTERNAL
@@ -19,24 +19,24 @@ const (
 )
 
 const (
-	INSTANCE_ALL int64 = iota
+	INSTANCE_ALL uint64 = iota
 	INSTANCE_DESKTOP
 	INSTANCE_CONSOLE
 	INSTANCE_WEB
 )
 
-const ACCOUNT_ID_MASK int64 = 0xFFFFFFFF
-const ACCOUNT_INSTANCE_MASK int64 = 0x000FFFFF
+const ACCOUNT_ID_MASK uint64 = 0xFFFFFFFF
+const ACCOUNT_INSTANCE_MASK uint64 = 0x000FFFFF
 
 const CHAT_INSTANCE_FLAGS_CLAN = (ACCOUNT_INSTANCE_MASK + 1) >> 1
 const CHAT_INSTANCE_FLAGS_LOBBY = (ACCOUNT_INSTANCE_MASK + 1) >> 2
 const CHAT_INSTANCE_FLAGS_MMSLOBBY = (ACCOUNT_INSTANCE_MASK + 1) >> 3
 
 type SteamId struct {
-	Universe  int64
+	Universe  uint64
 	Type      types.Type
-	Instance  int64
-	AccountId int64
+	Instance  uint64
+	AccountId uint64
 	Token     string
 }
 
@@ -54,19 +54,18 @@ func NewSteamId(input string) (*SteamId, error) {
 	}
 
 	if ok, _ := regexp.MatchString(`^\d+$`, input); ok {
-		num, err := strconv.ParseInt(input, 10, 64)
+		num, err := strconv.ParseUint(input, 10, 64)
 		if err != nil {
 			return nil, err
 		}
-
 		id.AccountId = num & ACCOUNT_ID_MASK
 		id.Instance = (num >> 32) & ACCOUNT_INSTANCE_MASK
 		id.Type = types.Type((num >> 52) & 0xF)
 		id.Universe = num >> 56
 	} else if matches := regexp.MustCompile(`^STEAM_([0-5]):([0-1]):([0-9]+)$`).FindStringSubmatch(input); matches != nil {
-		universe, _ := strconv.ParseInt(matches[1], 10, 64)
-		mod, _ := strconv.ParseInt(matches[2], 10, 64)
-		accountid, _ := strconv.ParseInt(matches[3], 10, 64)
+		universe, _ := strconv.ParseUint(matches[1], 10, 64)
+		mod, _ := strconv.ParseUint(matches[2], 10, 64)
+		accountid, _ := strconv.ParseUint(matches[3], 10, 64)
 		if universe == 0 {
 			universe = UNIVERSE_PUBLIC
 		}
@@ -76,15 +75,15 @@ func NewSteamId(input string) (*SteamId, error) {
 		id.AccountId = accountid*2 + mod
 	} else if matches := regexp.MustCompile(`^\[([a-zA-Z]):([0-5]):([0-9]+)(:[0-9]+)?]$`).FindStringSubmatch(input); matches != nil {
 		typeChar := matches[1]
-		universe, _ := strconv.ParseInt(matches[2], 10, 64)
-		accountid, _ := strconv.ParseInt(matches[3], 10, 64)
+		universe, _ := strconv.ParseUint(matches[2], 10, 64)
+		accountid, _ := strconv.ParseUint(matches[3], 10, 64)
 		instanceid := matches[4]
 
 		id.Universe = universe
 		id.AccountId = accountid
 
 		if instanceid != "" {
-			id.Instance, _ = strconv.ParseInt(instanceid[1:], 10, 64)
+			id.Instance, _ = strconv.ParseUint(instanceid[1:], 10, 64)
 		}
 
 		switch typeChar {
@@ -109,7 +108,7 @@ func NewSteamId(input string) (*SteamId, error) {
 	return &id, nil
 }
 
-func (id *SteamId) FromIndividualAccountID(accountid int64) *SteamId {
+func (id *SteamId) FromIndividualAccountID(accountid uint64) *SteamId {
 	id.Universe = UNIVERSE_PUBLIC
 	id.Type = types.TYPE_INDIVIDUAL
 	id.Instance = INSTANCE_DESKTOP
@@ -121,7 +120,7 @@ func (id *SteamId) FromIndividualAccountID(accountid int64) *SteamId {
 
 func (id *SteamId) FromTradeUrl(url string) error {
 	if matches := regexp.MustCompile(`^https://steamcommunity\.com/tradeoffer/new/\?partner=(\d+)&token=([\w-]+)$`).FindStringSubmatch(url); matches != nil {
-		accountid, _ := strconv.ParseInt(matches[1], 10, 64)
+		accountid, _ := strconv.ParseUint(matches[1], 10, 64)
 		token := matches[2]
 		id.FromIndividualAccountID(accountid)
 		id.Token = token
@@ -205,7 +204,7 @@ func (id SteamId) GetSteam2RenderedID(newFormats ...bool) string {
 			universe = 0
 		}
 
-		return fmt.Sprintf("STEAM_%d:%d:%d", universe, id.AccountId&1, int64(math.Floor(float64(id.AccountId)/2)))
+		return fmt.Sprintf("STEAM_%d:%d:%d", universe, id.AccountId&1, uint64(math.Floor(float64(id.AccountId)/2)))
 	}
 }
 
@@ -227,9 +226,9 @@ func (id SteamId) GetSteam3RenderedID() string {
 	}
 }
 
-func (id SteamId) GetBigIntId() int64 {
+func (id SteamId) GetBigIntId() uint64 {
 	universe := id.Universe << 56
-	typeTmp := int64(id.Type) << 52
+	typeTmp := uint64(id.Type) << 52
 	instance := id.Instance << 32
 	accountId := id.AccountId
 
@@ -237,7 +236,7 @@ func (id SteamId) GetBigIntId() int64 {
 }
 
 func (id SteamId) String() string {
-	return strconv.FormatInt(id.GetBigIntId(), 10)
+	return strconv.FormatUint(id.GetBigIntId(), 10)
 }
 func (id SteamId) GetSteamID64() string {
 	return id.String()
